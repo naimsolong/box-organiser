@@ -1,0 +1,16 @@
+{
+  "name": "box-organiser",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "db:generate": "drizzle-kit generate",
+    "db:create": "wrangler d1 create box-organiser-db",
+    "db:migrate:local": "wrangler d1 migrations apply box-organiser-db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply box-organiser-db --remote",
+    "deploy": "nuxt build && wrangler deploy"
+  }
+}

@@ -1,0 +1,21 @@
+# Nuxt
+node_modules
+.nuxt
+.output
+.data
+dist
+
+# Cloudflare / Wrangler local state
+.wrangler
+
+# Env
+.env
+.env.*
+!.env.example
+
+# CommandCode local tooling
+.commandcode/
+
+# Logs & OS
+*.log
+.DS_Store
