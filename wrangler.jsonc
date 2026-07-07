@@ -1,14 +1,24 @@
 {
-  "name": "box-organiser",
-  "main": ".output/server/index.mjs",
-  "compatibility_date": "2025-05-15",
-  "compatibility_flags": ["nodejs_compat"],
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "box-organiser-db",
-      "database_id": "REPLACE_WITH_ID_FROM_wrangler_d1_create",
-      "migrations_dir": "drizzle/migrations"
-    }
-  ]
+	"name": "box-organiser",
+	"main": ".output/server/index.mjs",
+	"compatibility_date": "2025-05-15",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"assets": {
+		"directory": ".output/public",
+		"binding": "ASSETS"
+	},
+	"vars": {
+		"NUXT_PUBLIC_SITE_URL": "http://localhost:3000",
+		"BETTER_AUTH_SECRET": "dev-secret-change-me"
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "box-organiser-db",
+			"database_id": "215a11f4-bc07-4258-aeb1-d9076d99f770",
+			"migrations_dir": "drizzle/migrations"
+		}
+	]
 }

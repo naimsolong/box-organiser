@@ -4,7 +4,7 @@ import type { H3Event } from 'h3'
 /**
  * Returns a Drizzle instance bound to the Cloudflare D1 `DB` binding.
  * The binding is available on `event.context.cloudflare.env` in both
- * local development (via Nitro's Cloudflare dev emulation) and production.
+ * local development (Nitro's Cloudflare dev emulation) and production.
  */
 export function useDb(event: H3Event) {
   const env = (event.context as any).cloudflare?.env

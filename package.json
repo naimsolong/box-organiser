@@ -12,5 +12,21 @@
     "db:migrate:local": "wrangler d1 migrations apply box-organiser-db --local",
     "db:migrate:remote": "wrangler d1 migrations apply box-organiser-db --remote",
     "deploy": "nuxt build && wrangler deploy"
+  },
+  "dependencies": {
+    "better-auth": "latest",
+    "drizzle-orm": "latest",
+    "html5-qrcode": "latest",
+    "jspdf": "latest",
+    "nanoid": "latest",
+    "qrcode": "latest"
+  },
+  "devDependencies": {
+    "@types/qrcode": "latest",
+    "drizzle-kit": "latest",
+    "nitro-cloudflare-dev": "latest",
+    "nuxt": "latest",
+    "typescript": "latest",
+    "wrangler": "latest"
   }
 }
