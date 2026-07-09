@@ -1,5 +1,12 @@
 <script setup lang="ts">
 const { register } = useAuth()
+
+// Only show this page in dev (email/password is local-only).
+const { data: mode } = await useFetch<{ providers: ('email' | 'google')[] }>('/api/auth/mode')
+if (!mode.value?.providers.includes('email')) {
+  await navigateTo('/login')
+}
+
 const name = ref('')
 const email = ref('')
 const password = ref('')

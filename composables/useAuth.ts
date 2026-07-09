@@ -24,6 +24,21 @@ export function useAuth() {
     await fetchSession()
   }
 
+  /**
+   * Kicks off Google OAuth. Better Auth's signIn.social redirects the browser
+   * to Google's consent page, then back to /api/auth/callback/google, which
+   * sets the session cookie and lands the user on the dashboard.
+   *
+   * `callbackURL` is where Google sends the user after a successful sign-in.
+   * Better Auth handles the redirect itself — we just need to navigate here.
+   */
+  async function signInWithGoogle(callbackURL = '/') {
+    await $fetch('/api/auth/sign-in/social', {
+      method: 'POST',
+      body: { provider: 'google', callbackURL },
+    })
+  }
+
   async function logout() {
     try {
       await $fetch('/api/auth/sign-out', { method: 'POST' })
@@ -33,5 +48,5 @@ export function useAuth() {
     }
   }
 
-  return { session, fetched, fetchSession, login, register, logout }
+  return { session, fetched, fetchSession, login, register, signInWithGoogle, logout }
 }

@@ -6,7 +6,9 @@ is **rotatable** (regenerating it invalidates old prints).
 
 ## Features
 
-- **Multi-user auth** — email/password login via [Better Auth](https://better-auth.com) (Drizzle/D1 adapter).
+- **Multi-user auth** — login method depends on environment:
+  - **Local dev** — email + password (no OAuth setup needed).
+  - **Production** — Google SSO only.
 - **Boxes** — create / edit / delete, with location, category, and status (active / sealed / archived).
 - **Inventory items** — add / edit / delete items per box, with quantity and low-stock threshold.
 - **QR codes** — auto-generated on box creation, encodes a public link `/b/{shareCode}`.
@@ -31,6 +33,24 @@ is **rotatable** (regenerating it invalidates old prints).
 | PDF | `jspdf` (client-side — Cloudflare Workers can't run server-side PDF libs) |
 | Scanner | `html5-qrcode` |
 
+## Auth modes
+
+The active sign-in method is chosen from `NUXT_PUBLIC_SITE_URL`:
+
+| `NUXT_PUBLIC_SITE_URL` | Mode | UI shows |
+|------------------------|------|----------|
+| `http://localhost:3000` (or unset) | **Dev** | email + password login + register |
+| `https://<prod-domain>` | **Prod** | "Continue with Google" only |
+
+The rule lives in `server/utils/auth.ts` (`isDev = baseURL.includes('localhost')`).
+We branch on `baseURL` rather than `NODE_ENV` because `NODE_ENV` is always
+`"production"` inside a Worker bundle, which would silently disable the dev
+login on the deployed app.
+
+A small public endpoint `/api/auth/mode` returns `{ providers: ['email'] }` in
+dev and `{ providers: ['google'] }` in prod, which the login page reads to
+decide what to render.
+
 ## Prerequisites
 
 - Node.js 20+
@@ -39,7 +59,7 @@ is **rotatable** (regenerating it invalidates old prints).
   npx wrangler login
   ```
 
-## Setup
+## Setup (local dev)
 
 ### 1. Install dependencies
 
@@ -65,7 +85,22 @@ npm run db:generate       # drizzle-kit generate -> drizzle/migrations/*.sql
 npm run db:migrate:local  # apply to local D1 (used by `nuxt dev`)
 ```
 
-### 4. Run the dev server
+### 4. Local secrets (`.dev.vars`, gitignored)
+
+The dev secret and site URL live in `.dev.vars` (auto-loaded by Wrangler in dev,
+gitignored). It should contain:
+
+```env
+NUXT_PUBLIC_SITE_URL=http://localhost:3000
+BETTER_AUTH_SECRET=dev-secret-change-me
+```
+
+The default `.dev.vars` shipped in the repo is already gitignored. You should
+**replace the dev `BETTER_AUTH_SECRET`** with a real value (`openssl rand -base64 32`)
+if you care about local sessions being unguessable — the placeholder is fine for
+hobbyist dev.
+
+### 5. Run the dev server
 
 ```bash
 npm run dev
@@ -86,29 +121,59 @@ Open http://localhost:3000, register an account, and create a box.
 
 ## Production deployment
 
-### 1. Configure secrets & URL
+### 1. Set Cloudflare secrets (env-mode is auto-selected by `NUXT_PUBLIC_SITE_URL`)
 
 ```bash
-# Set the production site URL as a var (or edit wrangler.jsonc `vars`)
-npx wrangler secret put NUXT_PUBLIC_SITE_URL
-# Set the Better Auth session secret (generate with: openssl rand -base64 32)
-npx wrangler secret put BETTER_AUTH_SECRET
+# Required in production
+wrangler secret put NUXT_PUBLIC_SITE_URL          # e.g. https://box-organiser.<account>.workers.dev
+wrangler secret put BETTER_AUTH_SECRET            # openssl rand -base64 32
+
+# Required in production (Google SSO is the only sign-in method)
+wrangler secret put GOOGLE_CLIENT_ID
+wrangler secret put GOOGLE_CLIENT_SECRET
 ```
 
-> For local dev, both are provided via `wrangler.jsonc` `vars`. Never commit a real
-> production secret. (`.env.example` documents them; `.env` is gitignored.)
+### 2. Configure the Google OAuth client (one-time, manual)
 
-### 2. Apply migrations to the remote database
+In https://console.cloud.google.com/ → **APIs & Services** → **Credentials**:
+
+1. Create an OAuth client. **Application type: Web application**.
+2. Under **Authorized redirect URIs**, add **exactly**:
+   `https://<your-prod-domain>/api/auth/callback/google`
+3. Copy the **Client ID** and **Client Secret** into the `wrangler secret put` calls above.
+
+> **Redirect URI must match byte-for-byte** (scheme + host + path). Localhost is
+> not registered because dev doesn't use Google. If you change your prod domain
+> later, add the new redirect URI in the console before deploying.
+
+OAuth consent screen note: while the app is in "Testing" status, only the
+test users you add can sign in. For any Google account to register, click
+**Publish App** in the OAuth consent screen (verification is not required for
+`openid email profile` scopes on personal projects).
+
+### 3. Apply migrations to the remote database
 
 ```bash
 npm run db:migrate:remote
 ```
 
-### 3. Build & deploy
+### 4. Build & deploy
 
 ```bash
 npm run deploy   # nuxt build && wrangler deploy
 ```
+
+### 5. One-time D1 cleanup (only if migrating from email/password)
+
+If you previously deployed with email/password enabled and want to drop those
+old accounts:
+
+```bash
+wrangler d1 execute box-organiser-db --remote --command \
+  "DELETE FROM session; DELETE FROM account; DELETE FROM user;"
+```
+
+If this is your first Google-only deploy, skip this step.
 
 ## Project structure
 
@@ -116,10 +181,11 @@ npm run deploy   # nuxt build && wrangler deploy
 server/
   database/schema.ts          Drizzle schema (Better Auth tables + boxes + items)
   utils/db.ts                 Drizzle instance from D1 binding
-  utils/auth.ts               Better Auth instance + requireUser()
+  utils/auth.ts               Better Auth instance (email in dev, Google in prod) + requireUser()
   api/
-    auth/[...all].ts          Better Auth catch-all (sign-in/up/out)
+    auth/[...all].ts          Better Auth catch-all (sign-in/up/out + social)
     auth/session.get.ts       current session (for the client)
+    auth/mode.get.ts          active providers (email | google)
     boxes.get.ts / .post.ts   list (filters/counts) / create (auto shareCode)
     boxes/[id].{get,patch,delete}.ts
     boxes/[id]/regenerate-qr.post.ts
@@ -127,20 +193,23 @@ server/
     items/[id].{patch,delete}.ts
     public/boxes/[shareCode].get.ts   no-auth read-only box view
 composables/
-  useAuth.ts                  session state + login/register/logout
+  useAuth.ts                  session state + login/register/signInWithGoogle/logout
   useQr.ts                    QR dataURL + share URL helpers
   usePdf.ts                   jsPDF: QR, manifest, label sheet
 middleware/auth.global.ts     protects all non-public routes
 pages/
   index.vue                   dashboard (boxes + filters + counts)
-  login.vue / register.vue
+  login.vue                   email/password (dev) OR Google button (prod)
+  register.vue                dev-only; redirects to /login in prod
   boxes/new.vue               create box
   boxes/[id].vue              box detail: edit, items, QR, PDF exports
   b/[shareCode].vue           public read-only view (what QR opens)
   scan.vue                    camera QR scanner
   labels.vue                  bulk label-sheet PDF
 wrangler.jsonc                D1 binding + vars + assets config
+.dev.vars                     local-only env (gitignored)
 drizzle.config.ts             drizzle-kit config
+docs/PLAN-google-sso.md       design notes for the dev/prod auth split
 ```
 
 ## Notes & caveats
@@ -152,5 +221,7 @@ drizzle.config.ts             drizzle-kit config
 - The auth schema in `server/database/schema.ts` matches Better Auth's defaults. If
   you customise auth options, regenerate with `npx @better-auth/cli generate` and
   reconcile the tables.
-- Item photos, OAuth/social login, audit history, CSV backup, and offline PWA are
+- `.dev.vars` is gitignored. `.env.example` documents every key with the
+  required environment (dev / prod) and the `wrangler secret put` command.
+- Item photos, account linking, audit history, CSV backup, and offline PWA are
   intentionally out of scope for this build.
