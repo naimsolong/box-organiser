@@ -128,6 +128,23 @@ async function copyLink(url: string) {
   }
 }
 
+// Web Share API — opens the native share sheet (WhatsApp, Telegram, Mail, etc.)
+// on mobile and on supported desktop OSes. Falls back to nothing if the user
+// cancels (the AbortError is expected and not an error worth showing).
+async function shareLink(url: string, title: string) {
+  const full = `${window.location.origin}${url}`
+  if (typeof navigator === 'undefined' || !('share' in navigator)) return false
+  try {
+    await navigator.share({ title, text: `${title} — join link:`, url: full })
+    return true
+  } catch (e: any) {
+    if (e?.name === 'AbortError') return true // user cancelled; treat as success
+    return false
+  }
+}
+
+const canShare = computed(() => typeof navigator !== 'undefined' && 'share' in navigator)
+
 // -- Member role change / remove --
 async function changeRole(userId: string, role: 'editor' | 'viewer') {
   try {
@@ -319,6 +336,14 @@ function statusClass(s: string) {
           Invite link created:
           <code>{{ lastInviteLink }}</code>
           <button class="btn btn-sm" type="button" @click="copyLink(lastInviteLink)">Copy</button>
+          <button
+            v-if="canShare"
+            class="btn btn-sm"
+            type="button"
+            @click="shareLink(lastInviteLink, warehouse!.name)"
+          >
+            Share…
+          </button>
         </p>
 
         <h3 v-if="invitations && invitations.invitations.length" style="margin-top: 1rem">Pending invitations</h3>
@@ -339,6 +364,13 @@ function statusClass(s: string) {
               <td>
                 <div class="row" style="gap: 0.25rem">
                   <button class="btn btn-sm" @click="copyLink(inv.inviteUrl)">Copy link</button>
+                  <button
+                    v-if="canShare"
+                    class="btn btn-sm"
+                    @click="shareLink(inv.inviteUrl, warehouse!.name)"
+                  >
+                    Share…
+                  </button>
                   <button class="btn btn-sm btn-danger" @click="revokeInvite(inv.token)">Revoke</button>
                 </div>
               </td>
