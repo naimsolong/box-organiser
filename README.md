@@ -20,6 +20,7 @@ is **rotatable** (regenerating it invalidates old prints).
 - **Scan** — in-app camera scanner to open a box by its QR code.
 - **Search & filter** — dashboard filters by name, status, category; per-box item counts and low-stock badges.
 - **Public box view** — `/b/{shareCode}` is accessible without login (what the QR resolves to).
+- **Warehouses** — group boxes into a shared inventory and invite teammates. Three roles per warehouse: **owner** (manages members + settings), **editor** (full box CRUD), **viewer** (read-only). Boxes can be moved between warehouses, or back to personal. Existing data is unaffected — boxes stay personal (`warehouseId = NULL`) until you create a warehouse. See [`docs/PLAN-warehouses.md`](docs/PLAN-warehouses.md).
 
 ## Tech stack
 
@@ -206,11 +207,47 @@ pages/
   b/[shareCode].vue           public read-only view (what QR opens)
   scan.vue                    camera QR scanner
   labels.vue                  bulk label-sheet PDF
+  warehouses/index.vue        list of warehouses
+  warehouses/new.vue          create warehouse
+  warehouses/[id]/index.vue   detail with Boxes / Members / Settings tabs
+  invite/[token].vue          public invite view + accept
 wrangler.jsonc                D1 binding + vars + assets config
 .dev.vars                     local-only env (gitignored)
 drizzle.config.ts             drizzle-kit config
 docs/PLAN-google-sso.md       design notes for the dev/prod auth split
 ```
+
+## Warehouses
+
+Boxes can be grouped into a **warehouse** so a team can manage the same
+inventory. Each warehouse has a roster with one of three roles:
+
+| Role | Can do |
+|------|--------|
+| **owner** | Rename / delete the warehouse, invite / remove members, change roles, and do anything an editor can. |
+| **editor** | Create / edit / delete boxes and items, rotate QRs, move boxes in or out of the warehouse. |
+| **viewer** | Read-only access to the warehouse's boxes (including the QR public view). |
+
+### Quick tour
+
+1. **Create** — `/warehouses` → **+ New warehouse**. The creator is the first owner.
+2. **Invite** — open the warehouse → **Members** tab → enter an email and a role. The link is shown in the UI and logged to the console in dev (email delivery is a v1.1 item). Anyone with the link can view the invite; only the matching email can accept it.
+3. **Accept** — the invitee opens `/invite/{token}`. If they're not signed in, they see **Log in** / **Register**; on return, the **Accept** button becomes active.
+4. **Move boxes** — open a box, click **Move…** to put it in (or take it out of) any warehouse where you have `editor+`.
+
+### Authorization at a glance
+
+- **View a box** — you're the box's `ownerId` OR a member of its warehouse.
+- **Edit a box** — same as view, plus your warehouse role is `editor` or `owner`. Personal boxes (`warehouseId = NULL`) are editable only by their owner.
+- **Public QR (`/b/{shareCode}`)** — still works for non-members, by design. The public view now shows the warehouse name if the box is in one.
+
+### Edge cases
+
+- The **last owner** of a warehouse cannot be removed or demoted, and cannot leave the warehouse.
+- **Soft-deleting** a warehouse sets `archivedAt`, removes all members, and reverts boxes to personal. Public QR codes keep working.
+- An **invitation token** expires after 7 days, can be revoked by the owner, and is single-use. Tokens are tied to a specific email — signing in with a different email returns 403.
+
+The full design and API surface is in [`docs/PLAN-warehouses.md`](docs/PLAN-warehouses.md).
 
 ## Notes & caveats
 

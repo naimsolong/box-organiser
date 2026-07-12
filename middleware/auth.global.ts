@@ -3,7 +3,8 @@ export default defineNuxtRouteMiddleware(async (to) => {
     to.path === '/login' ||
     to.path === '/register' ||
     to.path.startsWith('/b/') ||
-    to.path === '/scan'
+    to.path === '/scan' ||
+    to.path.startsWith('/invite/')
 
   if (isPublic) return
 

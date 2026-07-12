@@ -1,11 +1,11 @@
-import { and, eq } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import { boxes } from '~~/server/database/schema'
 import type { NewBox } from '~~/server/database/schema'
 
 export default defineEventHandler(async (event) => {
-  const user = await requireUser(event)
   const id = Number(getRouterParam(event, 'id'))
   if (!id) throw createError({ statusCode: 400, statusMessage: 'Invalid id' })
+  await requireBoxAccess(event, id, 'edit')
 
   const body = await readBody<Partial<Pick<NewBox, 'name' | 'location' | 'category' | 'status'>>>(event)
   const db = useDb(event)
@@ -18,7 +18,7 @@ export default defineEventHandler(async (event) => {
       ...(body.category !== undefined && { category: body.category }),
       ...(body.status !== undefined && { status: body.status }),
     })
-    .where(and(eq(boxes.id, id), eq(boxes.ownerId, user.id)))
+    .where(eq(boxes.id, id))
     .returning()
 
   if (!updated) throw createError({ statusCode: 404, statusMessage: 'Box not found' })

@@ -4,6 +4,12 @@ const { login, signInWithGoogle } = useAuth()
 const { data: mode } = await useFetch<{ providers: ('email' | 'google')[] }>('/api/auth/mode')
 const providers = computed(() => mode.value?.providers ?? [])
 
+const route = useRoute()
+const redirect = computed(() => {
+  const r = route.query.redirect
+  return typeof r === 'string' && r.startsWith('/') ? r : '/'
+})
+
 const email = ref('')
 const password = ref('')
 const err = ref('')
@@ -14,7 +20,7 @@ async function submit() {
   loading.value = true
   try {
     await login(email.value, password.value)
-    await navigateTo('/')
+    await navigateTo(redirect.value)
   } catch (e: any) {
     err.value = e?.statusMessage || e?.data?.message || 'Login failed'
   } finally {
@@ -26,7 +32,7 @@ async function doGoogle() {
   err.value = ''
   loading.value = true
   try {
-    await signInWithGoogle('/')
+    await signInWithGoogle(redirect.value)
   } catch (e: any) {
     err.value = e?.statusMessage || e?.data?.message || 'Google sign-in failed'
     loading.value = false

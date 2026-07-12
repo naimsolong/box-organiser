@@ -7,6 +7,12 @@ if (!mode.value?.providers.includes('email')) {
   await navigateTo('/login')
 }
 
+const route = useRoute()
+const redirect = computed(() => {
+  const r = route.query.redirect
+  return typeof r === 'string' && r.startsWith('/') ? r : '/'
+})
+
 const name = ref('')
 const email = ref('')
 const password = ref('')
@@ -22,7 +28,7 @@ async function submit() {
   loading.value = true
   try {
     await register(name.value, email.value, password.value)
-    await navigateTo('/')
+    await navigateTo(redirect.value)
   } catch (e: any) {
     err.value = e?.statusMessage || e?.data?.message || 'Registration failed'
   } finally {

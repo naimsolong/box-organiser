@@ -1,10 +1,17 @@
 <script setup lang="ts">
+definePageMeta({ layout: 'default' })
+
 interface Item {
   id: number
   name: string
   description: string | null
   quantity: number
   lowStockThreshold: number | null
+}
+interface WarehouseLite {
+  id: number
+  name: string
+  role: string
 }
 interface BoxDetail {
   id: number
@@ -13,6 +20,8 @@ interface BoxDetail {
   category: string | null
   status: string
   shareCode: string
+  warehouseId: number | null
+  warehouse: WarehouseLite | null
   items: Item[]
 }
 
@@ -58,6 +67,33 @@ async function deleteBox() {
   if (!confirm('Delete this box and all its items?')) return
   await $fetch(`/api/boxes/${id}`, { method: 'DELETE' })
   await navigateTo('/')
+}
+
+// Warehouse move
+const { data: warehousesData } = await useAsyncData('warehouses:list:boxdetail', () =>
+  $fetch<{ warehouses: { id: number; name: string; role: string }[] }>('/api/warehouses'),
+)
+const movableWarehouses = computed(() =>
+  (warehousesData.value?.warehouses ?? []).filter((w) => w.role === 'owner' || w.role === 'editor'),
+)
+const showMove = ref(false)
+const moveTarget = ref<number | ''>('')
+
+async function doMove() {
+  if (moveTarget.value === '' && box.value?.warehouseId === null) {
+    showMove.value = false
+    return
+  }
+  try {
+    await $fetch(`/api/boxes/${id}/move`, {
+      method: 'POST',
+      body: { warehouseId: moveTarget.value === '' ? null : Number(moveTarget.value) },
+    })
+    showMove.value = false
+    await refresh()
+  } catch (e: any) {
+    alert(e?.statusMessage || 'Failed to move')
+  }
 }
 
 // QR
@@ -158,9 +194,16 @@ function isLow(item: Item) {
 <template>
   <div v-if="box">
     <NuxtLink to="/" class="muted">← Back to boxes</NuxtLink>
-    <div class="row" style="justify-content: space-between; margin-top: 0.5rem">
-      <h1>{{ box.name }}</h1>
-      <button class="btn btn-danger btn-sm" @click="deleteBox">Delete box</button>
+    <div class="row" style="justify-content: space-between; margin-top: 0.5rem; align-items: center">
+      <h1 style="margin: 0">{{ box.name }}</h1>
+      <div class="row" style="gap: 0.5rem">
+        <span v-if="box.warehouse" class="badge">
+          🏬 <NuxtLink :to="`/warehouses/${box.warehouse.id}`">{{ box.warehouse.name }}</NuxtLink>
+        </span>
+        <span v-else class="badge">Personal</span>
+        <button v-if="box.warehouseId !== null || movableWarehouses.length" class="btn btn-sm" @click="showMove = true">Move…</button>
+        <button class="btn btn-danger btn-sm" @click="deleteBox">Delete box</button>
+      </div>
     </div>
 
     <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0">
@@ -277,6 +320,21 @@ function isLow(item: Item) {
           </template>
         </tbody>
       </table>
+    </div>
+
+    <div v-if="showMove" class="card" style="margin: 1rem 0; max-width: 520px">
+      <h2>Move box</h2>
+      <p class="muted">Move this box to a different warehouse, or back to your personal inventory.</p>
+      <div class="row" style="gap: 0.5rem">
+        <select v-model="moveTarget" class="select" style="flex: 1">
+          <option value="">Personal (no warehouse)</option>
+          <option v-for="w in movableWarehouses" :key="w.id" :value="w.id">
+            {{ w.name }} ({{ w.role }})
+          </option>
+        </select>
+        <button class="btn btn-primary" @click="doMove">Move</button>
+        <button class="btn" @click="showMove = false">Cancel</button>
+      </div>
     </div>
   </div>
   <div v-else class="muted">Loading…</div>

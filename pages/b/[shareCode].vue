@@ -7,12 +7,13 @@ const { data: box, error } = await useFetch<{
   location: string | null
   category: string | null
   status: string
+  warehouse: { id: number; name: string } | null
   items: { name: string; description: string | null; quantity: number }[]
 }>(`/api/public/boxes/${shareCode}`)
 </script>
 
 <template>
-  <div class="main" style="max-width: 560px">
+  <div style="max-width: 560px; margin: 1rem auto">
     <div v-if="error" class="card" style="text-align: center">
       <h1>Box not found</h1>
       <p class="muted">This QR code may have been regenerated or the box deleted.</p>
@@ -24,7 +25,10 @@ const { data: box, error } = await useFetch<{
           <span v-if="box.location">📍 {{ box.location }}</span>
           <span v-if="box.category"> · 🏷️ {{ box.category }}</span>
         </p>
-        <span class="badge">{{ box.status }}</span>
+        <div class="row" style="gap: 0.4rem; flex-wrap: wrap">
+          <span class="badge">{{ box.status }}</span>
+          <span v-if="box.warehouse" class="badge">🏬 {{ box.warehouse.name }}</span>
+        </div>
       </div>
 
       <div class="card">

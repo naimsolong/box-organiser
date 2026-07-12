@@ -45,6 +45,13 @@ export function useAuth() {
     } finally {
       session.value = null
       fetched.value = true
+      // Clear the warehouse cache too — next user starts fresh.
+      try {
+        const { reset } = useWarehouses()
+        reset()
+      } catch {
+        // composable not available in some contexts; safe to ignore
+      }
     }
   }
 

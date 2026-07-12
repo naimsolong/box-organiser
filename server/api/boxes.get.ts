@@ -1,16 +1,23 @@
 import { and, eq, inArray, like, sql } from 'drizzle-orm'
 import { boxes, items } from '~~/server/database/schema'
+import { accessibleBoxCondition } from '~~/server/utils/access'
 
 export default defineEventHandler(async (event) => {
   const user = await requireUser(event)
   const db = useDb(event)
-  const { q, status, category, location } = getQuery(event)
+  const { q, status, category, location, warehouseId } = getQuery(event)
 
-  const conditions = [eq(boxes.ownerId, user.id)]
+  const conditions = [await accessibleBoxCondition(event)]
   if (status) conditions.push(eq(boxes.status, String(status)))
   if (category) conditions.push(eq(boxes.category, String(category)))
   if (location) conditions.push(eq(boxes.location, String(location)))
   if (q) conditions.push(like(boxes.name, `%${String(q)}%`))
+  if (warehouseId !== undefined) {
+    const wid = Number(warehouseId)
+    if (Number.isFinite(wid)) {
+      conditions.push(eq(boxes.warehouseId, wid))
+    }
+  }
 
   const list = await db.select().from(boxes).where(and(...conditions)).all()
 
