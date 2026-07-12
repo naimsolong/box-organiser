@@ -25,18 +25,28 @@ export function useAuth() {
   }
 
   /**
-   * Kicks off Google OAuth. Better Auth's signIn.social redirects the browser
-   * to Google's consent page, then back to /api/auth/callback/google, which
-   * sets the session cookie and lands the user on the dashboard.
+   * Kicks off Google OAuth. Better Auth's signIn.social returns a JSON body
+   * `{ url: 'https://accounts.google.com/...' }` — it does NOT redirect the
+   * browser itself. We must navigate to that URL manually, otherwise the
+   * caller just sits on a "Redirecting…" button forever.
    *
    * `callbackURL` is where Google sends the user after a successful sign-in.
-   * Better Auth handles the redirect itself — we just need to navigate here.
    */
   async function signInWithGoogle(callbackURL = '/') {
-    await $fetch('/api/auth/sign-in/social', {
+    const res = await $fetch<{ url?: string; redirect?: string }>('/api/auth/sign-in/social', {
       method: 'POST',
       body: { provider: 'google', callbackURL },
     })
+    const target = res?.url || res?.redirect
+    if (!target) {
+      throw new Error('Google sign-in did not return a redirect URL')
+    }
+    if (typeof window !== 'undefined') {
+      window.location.href = target
+    } else {
+      // SSR fallback: just return the URL so the caller can navigate.
+      return target
+    }
   }
 
   async function logout() {
