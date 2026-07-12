@@ -10,7 +10,7 @@
 		"binding": "ASSETS"
 	},
 	"vars": {
-		"NUXT_PUBLIC_SITE_URL": "http://localhost:3000"
+		"NUXT_PUBLIC_SITE_URL": "http://box-organiser.naimsolong.com"
 	},
 	"d1_databases": [
 		{
@@ -19,5 +19,20 @@
 			"database_id": "215a11f4-bc07-4258-aeb1-d9076d99f770",
 			"migrations_dir": "drizzle/migrations"
 		}
-	]
+	],
+	"observability": {
+		"enabled": false,
+		"head_sampling_rate": 1,
+		"logs": {
+		"enabled": true,
+		"head_sampling_rate": 1,
+		"persist": true,
+		"invocation_logs": true
+		},
+		"traces": {
+		"enabled": false,
+		"persist": true,
+		"head_sampling_rate": 1
+		}
+	}
 }

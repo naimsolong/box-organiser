@@ -5,7 +5,13 @@ const router = useRouter()
 
 async function doLogout() {
   await logout()
-  await router.push('/login')
+  // Force a full reload so the auth middleware re-evaluates and the
+  // top bar disappears (avoids stale `useState` on the layout).
+  if (typeof window !== 'undefined') {
+    window.location.href = '/login'
+  } else {
+    await router.push('/login')
+  }
 }
 </script>
 

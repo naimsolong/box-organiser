@@ -41,7 +41,13 @@ export function useAuth() {
 
   async function logout() {
     try {
-      await $fetch('/api/auth/sign-out', { method: 'POST' })
+      await $fetch('/api/auth/sign-out', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: {},
+      })
+    } catch {
+      // Even if the server call fails, clear local state so the UI updates.
     } finally {
       session.value = null
       fetched.value = true
