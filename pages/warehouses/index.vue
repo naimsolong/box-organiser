@@ -1,6 +1,4 @@
 <script setup lang="ts">
-definePageMeta({ layout: 'default' })
-
 const { data, refresh } = await useAsyncData('warehouses:list', () => $fetch('/api/warehouses'))
 
 const { setCurrent } = useWarehouses()

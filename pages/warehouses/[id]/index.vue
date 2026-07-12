@@ -1,6 +1,4 @@
 <script setup lang="ts">
-definePageMeta({ layout: 'default' })
-
 interface Member {
   userId: string
   role: 'owner' | 'editor' | 'viewer'

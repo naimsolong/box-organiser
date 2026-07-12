@@ -1,6 +1,4 @@
 <script setup lang="ts">
-definePageMeta({ layout: 'default' })
-
 interface Item {
   id: number
   name: string

@@ -1,6 +1,4 @@
 <script setup lang="ts">
-definePageMeta({ layout: 'default' })
-
 interface InviteInfo {
   email: string
   role: 'editor' | 'viewer'

@@ -1,6 +1,4 @@
 <script setup lang="ts">
-definePageMeta({ layout: 'default' })
-
 const form = reactive({ name: '', description: '' })
 const err = ref('')
 const loading = ref(false)

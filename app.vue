@@ -3,7 +3,10 @@ const route = useRoute()
 const { session, logout } = useAuth()
 
 const showNav = computed(
-  () => !['/login', '/register'].includes(route.path) && !route.path.startsWith('/b/'),
+  () =>
+    !['/login', '/register'].includes(route.path) &&
+    !route.path.startsWith('/b/') &&
+    !route.path.startsWith('/invite/'),
 )
 
 async function doLogout() {
@@ -18,6 +21,7 @@ async function doLogout() {
       <NuxtLink to="/" class="brand">Box Organiser</NuxtLink>
       <div class="links">
         <NuxtLink to="/">Boxes</NuxtLink>
+        <NuxtLink to="/warehouses">Warehouses</NuxtLink>
         <NuxtLink to="/scan">Scan</NuxtLink>
         <NuxtLink to="/labels">Labels</NuxtLink>
       </div>
