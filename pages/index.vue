@@ -69,7 +69,7 @@ const newBoxHref = computed(() => {
       <NuxtLink :to="newBoxHref" class="btn btn-primary">+ New box</NuxtLink>
     </div>
 
-    <div class="row" style="gap: 0.25rem; margin: 0.75rem 0; border-bottom: 1px solid #e5e7eb">
+    <div class="row scope-tabs" style="gap: 0.25rem; margin: 0.75rem 0; border-bottom: 1px solid #e5e7eb">
       <button class="tab" :class="{ active: scope === 'all' }" @click="setScope('all')">All accessible</button>
       <button class="tab" :class="{ active: scope === 'personal' }" @click="setScope('personal')">
         Personal ({{ warehousesData?.personalBoxCount ?? 0 }})
@@ -86,7 +86,7 @@ const newBoxHref = computed(() => {
     </div>
 
     <div class="card grid" style="margin: 1rem 0">
-      <div class="row">
+      <div class="row filter-row">
         <input v-model="filters.q" class="input" placeholder="Search by name…" />
         <select v-model="filters.status" class="select" style="max-width: 150px">
           <option value="">All statuses</option>
@@ -134,5 +134,25 @@ const newBoxHref = computed(() => {
   color: #111827;
   border-bottom-color: #4338ca;
   font-weight: 500;
+}
+
+@media (max-width: 640px) {
+  .scope-tabs {
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+  }
+  .scope-tabs::-webkit-scrollbar {
+    display: none;
+  }
+  .filter-row {
+    flex-direction: column;
+  }
+  .filter-row .input,
+  .filter-row .select {
+    max-width: 100% !important;
+  }
 }
 </style>

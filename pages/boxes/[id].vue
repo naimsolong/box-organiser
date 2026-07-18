@@ -204,7 +204,7 @@ function isLow(item: Item) {
       </div>
     </div>
 
-    <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0">
+    <div class="grid detail-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0">
       <!-- QR panel -->
       <div class="card grid" style="align-items: center; text-align: center">
         <h2>QR code</h2>
@@ -266,7 +266,7 @@ function isLow(item: Item) {
         <h2>Items ({{ items.length }})</h2>
       </div>
 
-      <form class="row" style="gap: 0.5rem; margin-bottom: 1rem" @submit.prevent="addItem">
+      <form class="row add-item-form" style="gap: 0.5rem; margin-bottom: 1rem" @submit.prevent="addItem">
         <input v-model="newItem.name" class="input" placeholder="Item name *" required style="flex: 2" />
         <input v-model="newItem.description" class="input" placeholder="Description" style="flex: 3" />
         <input v-model.number="newItem.quantity" type="number" min="1" class="input" placeholder="Qty" style="max-width: 70px" />
@@ -274,53 +274,55 @@ function isLow(item: Item) {
         <button class="btn btn-primary btn-sm" type="submit" :disabled="adding">Add</button>
       </form>
 
-      <p v-if="!items.length" class="muted">No items yet.</p>
-      <table v-else>
-        <thead>
-          <tr>
-            <th style="width: 50px">Qty</th>
-            <th>Name</th>
-            <th>Description</th>
-            <th style="width: 50px">Low</th>
-            <th style="width: 140px"></th>
-          </tr>
-        </thead>
-        <tbody>
-          <template v-for="item in items" :key="item.id">
-            <tr v-if="editingId !== item.id">
-              <td>{{ item.quantity }}</td>
-              <td>{{ item.name }}</td>
-              <td class="muted">{{ item.description }}</td>
-              <td>
-                <span v-if="item.lowStockThreshold !== null" :class="['badge', isLow(item) ? 'badge-warn' : 'badge-ok']">
-                  {{ isLow(item) ? 'low' : 'ok' }}
-                </span>
-              </td>
-              <td>
-                <div class="row" style="gap: 0.25rem">
-                  <button class="btn btn-sm" @click="startEdit(item)">Edit</button>
-                  <button class="btn btn-sm btn-danger" @click="deleteItem(item.id)">Del</button>
-                </div>
-              </td>
+      <div class="item-table-wrap">
+        <p v-if="!items.length" class="muted">No items yet.</p>
+        <table v-else>
+          <thead>
+            <tr>
+              <th style="width: 50px">Qty</th>
+              <th>Name</th>
+              <th>Description</th>
+              <th style="width: 50px">Low</th>
+              <th style="width: 140px"></th>
             </tr>
-            <tr v-else>
-              <td><input v-model.number="editForm.quantity" type="number" min="1" class="input" style="padding: 0.3rem" /></td>
-              <td><input v-model="editForm.name" class="input" style="padding: 0.3rem" /></td>
-              <td><input v-model="editForm.description" class="input" style="padding: 0.3rem" /></td>
-              <td><input v-model.number="editForm.lowStockThreshold" type="number" min="0" class="input" style="padding: 0.3rem" /></td>
-              <td>
-                <div class="row" style="gap: 0.25rem">
-                  <button class="btn btn-sm btn-primary" @click="saveItem(item.id)">Save</button>
-                  <button class="btn btn-sm" @click="editingId = null">Cancel</button>
-                </div>
-              </td>
-            </tr>
-          </template>
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            <template v-for="item in items" :key="item.id">
+              <tr v-if="editingId !== item.id">
+                <td>{{ item.quantity }}</td>
+                <td>{{ item.name }}</td>
+                <td class="muted">{{ item.description }}</td>
+                <td>
+                  <span v-if="item.lowStockThreshold !== null" :class="['badge', isLow(item) ? 'badge-warn' : 'badge-ok']">
+                    {{ isLow(item) ? 'low' : 'ok' }}
+                  </span>
+                </td>
+                <td>
+                  <div class="row" style="gap: 0.25rem">
+                    <button class="btn btn-sm" @click="startEdit(item)">Edit</button>
+                    <button class="btn btn-sm btn-danger" @click="deleteItem(item.id)">Del</button>
+                  </div>
+                </td>
+              </tr>
+              <tr v-else>
+                <td><input v-model.number="editForm.quantity" type="number" min="1" class="input" style="padding: 0.3rem" /></td>
+                <td><input v-model="editForm.name" class="input" style="padding: 0.3rem" /></td>
+                <td><input v-model="editForm.description" class="input" style="padding: 0.3rem" /></td>
+                <td><input v-model.number="editForm.lowStockThreshold" type="number" min="0" class="input" style="padding: 0.3rem" /></td>
+                <td>
+                  <div class="row" style="gap: 0.25rem">
+                    <button class="btn btn-sm btn-primary" @click="saveItem(item.id)">Save</button>
+                    <button class="btn btn-sm" @click="editingId = null">Cancel</button>
+                  </div>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
     </div>
 
-    <div v-if="showMove" class="card" style="margin: 1rem 0; max-width: 520px">
+    <div v-if="showMove" class="card move-card" style="margin: 1rem 0; max-width: 520px">
       <h2>Move box</h2>
       <p class="muted">Move this box to a different warehouse, or back to your personal inventory.</p>
       <div class="row" style="gap: 0.5rem">
@@ -337,3 +339,29 @@ function isLow(item: Item) {
   </div>
   <div v-else class="muted">Loading…</div>
 </template>
+
+<style scoped>
+@media (max-width: 640px) {
+  .detail-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .add-item-form {
+    flex-direction: column;
+  }
+  .add-item-form .input,
+  .add-item-form .select {
+    max-width: 100% !important;
+    flex: none !important;
+  }
+  .add-item-form .btn {
+    width: 100%;
+  }
+  .item-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .move-card {
+    max-width: 100% !important;
+  }
+}
+</style>

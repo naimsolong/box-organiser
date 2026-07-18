@@ -2,6 +2,8 @@
 const route = useRoute()
 const { session, logout } = useAuth()
 
+const menuOpen = ref(false)
+
 const showNav = computed(
   () =>
     !['/login', '/register'].includes(route.path) &&
@@ -18,8 +20,9 @@ async function doLogout() {
 <template>
   <div class="app">
     <nav v-if="showNav" class="nav">
+      <button class="mobile-menu-btn" @click="menuOpen = !menuOpen">☰</button>
       <NuxtLink to="/" class="brand">Box Organiser</NuxtLink>
-      <div class="links">
+      <div class="links" :class="{ open: menuOpen }">
         <NuxtLink to="/">Boxes</NuxtLink>
         <NuxtLink to="/warehouses">Warehouses</NuxtLink>
         <NuxtLink to="/scan">Scan</NuxtLink>
@@ -191,5 +194,65 @@ th {
 h1,
 h2 {
   margin: 0 0 0.25rem;
+}
+.mobile-menu-btn {
+  display: none;
+}
+.table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+@media (max-width: 640px) {
+  .nav {
+    flex-wrap: wrap;
+    padding: 0.6rem 0.75rem;
+  }
+  .nav .links {
+    display: none;
+    width: 100%;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+  }
+  .nav .links.open {
+    display: flex;
+  }
+  .mobile-menu-btn {
+    display: block;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.25rem;
+  }
+  .main {
+    padding: 1rem 0.75rem 3rem;
+  }
+  .container {
+    padding: 1.25rem;
+    margin: 2rem auto;
+  }
+  .card {
+    padding: 0.75rem 1rem;
+  }
+  h1 {
+    font-size: 1.4rem;
+  }
+  h2 {
+    font-size: 1.15rem;
+  }
+  .grid-mobile {
+    grid-template-columns: 1fr;
+  }
+  .btn-block-mobile {
+    width: 100%;
+  }
+}
+@media (max-width: 768px) {
+  .main {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
 }
 </style>

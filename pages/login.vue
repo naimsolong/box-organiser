@@ -60,7 +60,7 @@ async function doGoogle() {
       <template v-if="providers.includes('email')">
         <div v-if="providers.includes('google')" class="divider"><span>or</span></div>
 
-        <form class="grid" @submit.prevent="submit">
+        <form class="grid login-form" @submit.prevent="submit">
           <div>
             <label>Email</label>
             <input v-model="email" type="email" class="input" required autocomplete="email" />
@@ -123,5 +123,10 @@ async function doGoogle() {
 }
 .divider span {
   padding: 0 0.5rem;
+}
+@media (max-width: 640px) {
+  .login-form .btn-primary {
+    width: 100%;
+  }
 }
 </style>

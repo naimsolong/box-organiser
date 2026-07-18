@@ -41,7 +41,7 @@ async function submit() {
   <div class="container">
     <h1>Register</h1>
     <p class="muted">Box Organiser</p>
-    <form class="grid" @submit.prevent="submit">
+    <form class="grid login-form" @submit.prevent="submit">
       <div>
         <label>Name</label>
         <input v-model="name" class="input" required />
@@ -64,3 +64,11 @@ async function submit() {
     </form>
   </div>
 </template>
+
+<style scoped>
+@media (max-width: 640px) {
+  .login-form .btn-primary {
+    width: 100%;
+  }
+}
+</style>

@@ -54,7 +54,7 @@ function clearAll() {
     <p class="muted">Select boxes and print a sheet of QR labels (A4 or Letter).</p>
 
     <div class="card grid" style="margin: 1rem 0">
-      <div class="row">
+      <div class="row labels-options">
         <label>Page</label>
         <select v-model="opts.pageSize" class="select" style="max-width: 120px">
           <option value="a4">A4</option>
@@ -65,7 +65,7 @@ function clearAll() {
         <label>Gap (mm)</label>
         <input v-model.number="opts.gapMm" type="number" min="0" max="20" class="input" style="max-width: 70px" />
       </div>
-      <div class="row">
+      <div class="row labels-actions">
         <button class="btn btn-sm" @click="selectAll">Select all</button>
         <button class="btn btn-sm" @click="clearAll">Clear</button>
         <button class="btn btn-primary btn-sm" :disabled="selectedBoxes.length === 0 || generating" @click="generate">
@@ -83,3 +83,21 @@ function clearAll() {
     </div>
   </div>
 </template>
+
+<style scoped>
+@media (max-width: 640px) {
+  .labels-options {
+    flex-direction: column;
+  }
+  .labels-options .input,
+  .labels-options .select {
+    max-width: 100% !important;
+  }
+  .labels-actions {
+    flex-direction: column;
+  }
+  .labels-actions .btn {
+    width: 100%;
+  }
+}
+</style>

@@ -226,7 +226,7 @@ function statusClass(s: string) {
     </div>
     <p v-if="warehouse.description" class="muted">{{ warehouse.description }}</p>
 
-    <div class="row" style="gap: 0.25rem; margin: 1rem 0; border-bottom: 1px solid #e5e7eb">
+    <div class="row wh-tabs" style="gap: 0.25rem; margin: 1rem 0; border-bottom: 1px solid #e5e7eb">
       <button
         v-for="t in (['boxes','members','settings'] as const)"
         :key="t"
@@ -273,7 +273,7 @@ function statusClass(s: string) {
     <!-- MEMBERS TAB -->
     <div v-else-if="tab === 'members'">
       <h2>Members ({{ warehouse.members.length }})</h2>
-      <table>
+      <div class="member-table-wrap"><table>
         <thead>
           <tr>
             <th>Name</th>
@@ -309,12 +309,12 @@ function statusClass(s: string) {
             </td>
           </tr>
         </tbody>
-      </table>
+      </table></div>
 
       <!-- Invite UI (owner only) -->
       <div v-if="isOwner" class="card grid" style="margin-top: 1.5rem; max-width: 600px">
         <h2>Invite a member</h2>
-        <form class="row" style="gap: 0.5rem" @submit.prevent="sendInvite">
+        <form class="row invite-form" style="gap: 0.5rem" @submit.prevent="sendInvite">
           <input
             v-model="inviteForm.email"
             class="input"
@@ -347,7 +347,7 @@ function statusClass(s: string) {
         </p>
 
         <h3 v-if="invitations && invitations.invitations.length" style="margin-top: 1rem">Pending invitations</h3>
-        <table v-if="invitations && invitations.invitations.length">
+        <div class="invitation-table-wrap"><table v-if="invitations && invitations.invitations.length">
           <thead>
             <tr>
               <th>Email</th>
@@ -376,7 +376,7 @@ function statusClass(s: string) {
               </td>
             </tr>
           </tbody>
-        </table>
+        </table></div>
       </div>
     </div>
 
@@ -426,5 +426,33 @@ function statusClass(s: string) {
   color: #111827;
   border-bottom-color: #4338ca;
   font-weight: 500;
+}
+@media (max-width: 640px) {
+  .wh-tabs {
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+  }
+  .wh-tabs::-webkit-scrollbar {
+    display: none;
+  }
+  .invite-form {
+    flex-direction: column;
+  }
+  .invite-form .input,
+  .invite-form .select {
+    max-width: 100% !important;
+    flex: none !important;
+  }
+  .invite-form .btn {
+    width: 100%;
+  }
+  .member-table-wrap,
+  .invitation-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 }
 </style>
